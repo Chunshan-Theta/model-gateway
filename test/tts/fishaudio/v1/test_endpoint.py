@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock, MagicMock
 from io import BytesIO
 import httpx
+from contextlib import asynccontextmanager
 from app import app
 from tts.fishaudio.v1.endpoint import router, TTSRequest, FISH_API_KEY, TTS_MODEL
 
@@ -26,11 +27,21 @@ class TestTTSEndpoint:
         
         mock_response.aiter_bytes = mock_aiter_bytes
         
-        # 創建模擬客戶端
+        # 創建一個mock async context manager for stream
+        @asynccontextmanager
+        async def mock_stream_context(*args, **kwargs):
+            yield mock_response
+        
+        # 創建模擬客戶端實例
         mock_client_instance = AsyncMock()
-        mock_client_instance.stream = AsyncMock(return_value=mock_response)
-        mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_client_instance.stream = mock_stream_context
+        
+        # 創建一個mock async context manager for AsyncClient
+        @asynccontextmanager
+        async def mock_client_context(*args, **kwargs):
+            yield mock_client_instance
+        
+        mock_client.return_value = mock_client_context()
         
         # 發送請求
         response = client.post("/tts/fishaudio/v1/", json={
@@ -57,10 +68,21 @@ class TestTTSEndpoint:
         
         mock_response.aiter_bytes = mock_aiter_bytes
         
+        # 創建一個mock async context manager for stream
+        @asynccontextmanager
+        async def mock_stream_context(*args, **kwargs):
+            yield mock_response
+        
+        # 創建模擬客戶端實例
         mock_client_instance = AsyncMock()
-        mock_client_instance.stream = AsyncMock(return_value=mock_response)
-        mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_client_instance.stream = mock_stream_context
+        
+        # 創建一個mock async context manager for AsyncClient
+        @asynccontextmanager
+        async def mock_client_context(*args, **kwargs):
+            yield mock_client_instance
+        
+        mock_client.return_value = mock_client_context()
         
         response = client.post("/tts/fishaudio/v1/", json={
             "text": "Hello world",
@@ -80,12 +102,21 @@ class TestTTSEndpoint:
         mock_response.status_code = 400
         mock_response.aread = AsyncMock(return_value=b"Bad Request")
         
-        mock_client_instance = AsyncMock()
-        mock_client_instance.stream = AsyncMock(return_value=mock_response)
+        # 創建一個mock async context manager for stream
+        @asynccontextmanager
+        async def mock_stream_context(*args, **kwargs):
+            yield mock_response
         
-        mock_client.return_value = AsyncMock()
-        mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        # 創建模擬客戶端實例
+        mock_client_instance = AsyncMock()
+        mock_client_instance.stream = mock_stream_context
+        
+        # 創建一個mock async context manager for AsyncClient
+        @asynccontextmanager
+        async def mock_client_context(*args, **kwargs):
+            yield mock_client_instance
+        
+        mock_client.return_value = mock_client_context()
         
         response = client.post("/tts/fishaudio/v1/", json={
             "text": "Hello world",
@@ -129,10 +160,21 @@ class TestTTSEndpoint:
             
             mock_response.aiter_bytes = mock_aiter_bytes
             
+            # 創建一個mock async context manager for stream
+            @asynccontextmanager
+            async def mock_stream_context(*args, **kwargs):
+                yield mock_response
+            
+            # 創建模擬客戶端實例
             mock_client_instance = AsyncMock()
-            mock_client_instance.stream = AsyncMock(return_value=mock_response)
-            mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-            mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
+            mock_client_instance.stream = mock_stream_context
+            
+            # 創建一個mock async context manager for AsyncClient
+            @asynccontextmanager
+            async def mock_client_context(*args, **kwargs):
+                yield mock_client_instance
+            
+            mock_client.return_value = mock_client_context()
             
             response = client.post("/tts/fishaudio/v1/", json={
                 "text": "",
@@ -153,10 +195,25 @@ class TestTTSEndpoint:
         
         mock_response.aiter_bytes = mock_aiter_bytes
         
+        # 儲存stream調用參數
+        stream_calls = []
+        
+        # 創建一個mock async context manager for stream
+        @asynccontextmanager
+        async def mock_stream_context(*args, **kwargs):
+            stream_calls.append((args, kwargs))
+            yield mock_response
+        
+        # 創建模擬客戶端實例
         mock_client_instance = AsyncMock()
-        mock_client_instance.stream = AsyncMock(return_value=mock_response)
-        mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_client_instance.stream = mock_stream_context
+        
+        # 創建一個mock async context manager for AsyncClient
+        @asynccontextmanager
+        async def mock_client_context(*args, **kwargs):
+            yield mock_client_instance
+        
+        mock_client.return_value = mock_client_context()
         
         response = client.post("/tts/fishaudio/v1/", json={
             "text": "Test text",
@@ -166,14 +223,14 @@ class TestTTSEndpoint:
         })
         
         # 驗證調用參數
-        mock_client_instance.stream.assert_called_once()
-        call_args = mock_client_instance.stream.call_args
+        assert len(stream_calls) == 1
+        args, kwargs = stream_calls[0]
         
-        # 檢查 URL - 使用位置參數而不是關鍵字參數
-        assert call_args[0][1] == "https://api.fish.audio/v1/tts"
+        # 檢查 URL
+        assert args[1] == "https://api.fish.audio/v1/tts"
         
         # 檢查 headers
-        headers = call_args[1]["headers"]
+        headers = kwargs["headers"]
         assert headers["content-type"] == "application/msgpack"
         assert headers["model"] is not None
         assert "Bearer" in headers["authorization"]
