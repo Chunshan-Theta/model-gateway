@@ -11,7 +11,7 @@ dev:
 
 # 運行測試
 test:
-	pytest
+	./scripts/run_tests.sh
 
 # 運行測試並生成覆蓋率報告
 test-cov:
@@ -49,9 +49,9 @@ format:
 lint:
 	flake8 app.py test_app.py
 
-# 啟動開發服務器
+# 啟動 uvicorn 服務
 serve:
-	uvicorn app:app --reload --host 0.0.0.0 --port 8000
+	.venv/bin/uvicorn app:app --reload --host 0.0.0.0 --port 8000
 
 # 運行所有檢查
 check: test-cov lint
