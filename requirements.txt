@@ -4,6 +4,7 @@ uvicorn[standard]==0.24.0
 httpx==0.25.2
 ormsgpack==1.5.0
 pydantic==2.5.0
+python-dotenv==1.0.0
 
 # 測試依賴
 pytest==7.4.3

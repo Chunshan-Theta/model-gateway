@@ -2,12 +2,12 @@
 
 # 安裝依賴
 install:
-	pip install -r requirements.txt
+	.venv/bin/pip install -r requirements.txt
 
 # 開發模式安裝
 dev:
-	pip install -r requirements.txt
-	pip install -e .
+	.venv/bin/pip install -r requirements.txt
+	.venv/bin/pip install -e .
 
 # 運行測試
 test:

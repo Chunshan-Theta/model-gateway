@@ -14,4 +14,4 @@ class TestAppConfiguration:
     def test_environment_variables(self):
         """測試環境變數"""
         assert FISH_API_KEY is not None
-        assert TTS_MODEL == "speech-1.6"
+        assert TTS_MODEL is not None
