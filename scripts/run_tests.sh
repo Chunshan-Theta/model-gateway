@@ -19,7 +19,7 @@ echo "🚀 運行測試..."
 echo "================================"
 
 # 運行測試並生成覆蓋率報告
-pytest test_app.py -v \
+pytest test/ -v \
     --cov=app \
     --cov=tts \
     --cov-report=term-missing \

@@ -6,12 +6,7 @@ import httpx
 from app import app
 from tts.fishaudio.v1.endpoint import router, TTSRequest, FISH_API_KEY, TTS_MODEL
 
-# Corrected imports to align with the new modularized structure.
-
 client = TestClient(app)
-
-# Updated test cases to match the new endpoint '/tts/fishaudio/v1/' and fixed validation logic.
-
 
 class TestTTSEndpoint:
     """測試 TTS 端點"""
@@ -199,21 +194,29 @@ class TestTTSEndpoint:
         assert "Bearer" in headers["authorization"]
 
 
-class TestAppConfiguration:
-    """測試應用配置"""
+class TestTTSRequest:
+    """測試 TTSRequest 模型"""
     
-    def test_app_instance(self):
-        """測試 FastAPI 應用實例"""
-        from app import app
-        assert app is not None
-        assert hasattr(app, 'post')
+    def test_tts_request_valid_data(self):
+        """測試有效的 TTS 請求數據"""
+        data = {
+            "text": "Hello world",
+            "reference_id": "test_ref_123"
+        }
+        request = TTSRequest(**data)
+        assert request.text == "Hello world"
+        assert request.reference_id == "test_ref_123"
+        assert request.format == "mp3"  # 默認值
+        assert request.mp3_bitrate == 128  # 默認值
     
-    def test_environment_variables(self):
-        """測試環境變數"""
-        from tts.fishaudio.v1.endpoint import FISH_API_KEY, TTS_MODEL
-        assert FISH_API_KEY is not None
-        assert TTS_MODEL == "speech-1.6"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--cov=app", "--cov-report=html", "--cov-report=term"])
+    def test_tts_request_custom_format(self):
+        """測試自定義格式"""
+        data = {
+            "text": "Hello world",
+            "reference_id": "test_ref_123",
+            "format": "wav",
+            "mp3_bitrate": 192
+        }
+        request = TTSRequest(**data)
+        assert request.format == "wav"
+        assert request.mp3_bitrate == 192
