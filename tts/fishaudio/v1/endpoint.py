@@ -13,7 +13,7 @@ load_dotenv()
 
 router = APIRouter()
 
-FISH_API_KEY = os.getenv("FISH_API_KEY")
+FISH_API_KEY = os.getenv("FISH_API_KEY","your_default_fish_api_key")
 TTS_MODEL = "speech-s1"
 
 class TTSRequest(BaseModel):
