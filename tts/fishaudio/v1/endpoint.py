@@ -1,12 +1,11 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import Literal
 import httpx
 import ormsgpack
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 import os
 from dotenv import load_dotenv
+from tts.models import TTSRequest
 
 # 載入環境變量
 load_dotenv()
@@ -16,21 +15,15 @@ router = APIRouter()
 FISH_API_KEY = os.getenv("FISH_API_KEY","your_default_fish_api_key")
 TTS_MODEL = "speech-s1"
 
-class TTSRequest(BaseModel):
-    text: str
-    reference_id: str
-    format: Literal["mp3", "wav", "pcm"] = "mp3"
-    mp3_bitrate: Literal[64, 128, 192] = 64
-
 @router.post("/tts/fishaudio/v1/")
 async def tts_endpoint(req: TTSRequest):
     fish_payload = {
-        "text": req.text,
+        "text": req.input,
         "chunk_length": 200,
-        "format": req.format,
-        "mp3_bitrate": req.mp3_bitrate,
+        "format": req.response_format,
+        "mp3_bitrate": 64 if req.response_format == "mp3" else None,
         "references": [],
-        "reference_id": req.reference_id,
+        "reference_id": req.model,
         "normalize": True,
         "latency": "balanced",
     }
@@ -58,8 +51,8 @@ async def tts_endpoint(req: TTSRequest):
 
                 return StreamingResponse(
                     buffer,
-                    media_type=f"audio/{req.format}",
-                    headers={"Content-Disposition": f"attachment; filename=output.{req.format}"}
+                    media_type=f"audio/{req.response_format}",
+                    headers={"Content-Disposition": f"attachment; filename=output.{req.response_format}"}
                 )
                 
     except Exception as e:

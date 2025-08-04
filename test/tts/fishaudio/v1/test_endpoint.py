@@ -5,7 +5,8 @@ from io import BytesIO
 import httpx
 from contextlib import asynccontextmanager
 from app import app
-from tts.fishaudio.v1.endpoint import router, TTSRequest, FISH_API_KEY, TTS_MODEL
+from tts.fishaudio.v1.endpoint import router, FISH_API_KEY, TTS_MODEL
+from tts.models import TTSRequest
 
 client = TestClient(app)
 
@@ -45,8 +46,9 @@ class TestTTSEndpoint:
         
         # 發送請求
         response = client.post("/tts/fishaudio/v1/", json={
-            "text": "Hello world",
-            "reference_id": "test_ref_123"
+            "input": "Hello world",
+            "model": "test_ref_123",
+            "response_format": "mp3"
         })
         
         # 驗證響應
@@ -85,10 +87,9 @@ class TestTTSEndpoint:
         mock_client.return_value = mock_client_context()
         
         response = client.post("/tts/fishaudio/v1/", json={
-            "text": "Hello world",
-            "reference_id": "test_ref_123",
-            "format": "wav",
-            "mp3_bitrate": 192
+            "input": "Hello world",
+            "model": "test_ref_123",
+            "response_format": "wav"
         })
         
         assert response.status_code == 200
@@ -119,8 +120,9 @@ class TestTTSEndpoint:
         mock_client.return_value = mock_client_context()
         
         response = client.post("/tts/fishaudio/v1/", json={
-            "text": "Hello world",
-            "reference_id": "test_ref_123"
+            "input": "Hello world",
+            "model": "test_ref_123",
+            "response_format": "mp3"
         })
         
         # 在這種情況下，我們期望 HTTPException 會被捕獲並轉換為 500 錯誤
@@ -133,20 +135,20 @@ class TestTTSEndpoint:
     def test_tts_endpoint_missing_text(self):
         """測試缺少文本參數"""
         response = client.post("/tts/fishaudio/v1/", json={
-            "reference_id": "test_ref_123"
+            "model": "test_ref_123"
         })
         
         assert response.status_code == 422  # Validation error
-        assert "text" in response.json()["detail"][0]["loc"]
+        assert "input" in response.json()["detail"][0]["loc"]
     
-    def test_tts_endpoint_missing_reference_id(self):
-        """測試缺少 reference_id 參數"""
+    def test_tts_endpoint_missing_model(self):
+        """測試缺少 model 參數"""
         response = client.post("/tts/fishaudio/v1/", json={
-            "text": "Hello world"
+            "input": "Hello world"
         })
         
         assert response.status_code == 422  # Validation error
-        assert "reference_id" in response.json()["detail"][0]["loc"]
+        assert "model" in response.json()["detail"][0]["loc"]
     
     def test_tts_endpoint_empty_text(self):
         """測試空文本"""
@@ -177,8 +179,9 @@ class TestTTSEndpoint:
             mock_client.return_value = mock_client_context()
             
             response = client.post("/tts/fishaudio/v1/", json={
-                "text": "",
-                "reference_id": "test_ref_123"
+                "input": "",
+                "model": "test_ref_123",
+                "response_format": "mp3"
             })
             
             # 應該成功處理空文本
@@ -216,10 +219,9 @@ class TestTTSEndpoint:
         mock_client.return_value = mock_client_context()
         
         response = client.post("/tts/fishaudio/v1/", json={
-            "text": "Test text",
-            "reference_id": "ref_123",
-            "format": "pcm",
-            "mp3_bitrate": 64
+            "input": "Test text",
+            "model": "ref_123",
+            "response_format": "pcm"
         })
         
         # 驗證調用參數
@@ -242,23 +244,21 @@ class TestTTSRequest:
     def test_tts_request_valid_data(self):
         """測試有效的 TTS 請求數據"""
         data = {
-            "text": "Hello world",
-            "reference_id": "test_ref_123"
+            "input": "Hello world",
+            "model": "test_ref_123",
+            "response_format": "mp3"
         }
         request = TTSRequest(**data)
-        assert request.text == "Hello world"
-        assert request.reference_id == "test_ref_123"
-        assert request.format == "mp3"  # 默認值
-        assert request.mp3_bitrate in [64, 128, 192]  # 默認值
+        assert request.input == "Hello world"
+        assert request.model == "test_ref_123"
+        assert request.response_format == "mp3"  # 默認值
 
     def test_tts_request_custom_format(self):
         """測試自定義格式"""
         data = {
-            "text": "Hello world",
-            "reference_id": "test_ref_123",
-            "format": "wav",
-            "mp3_bitrate": 192
+            "input": "Hello world",
+            "model": "test_ref_123",
+            "response_format": "wav"
         }
         request = TTSRequest(**data)
-        assert request.format == "wav"
-        assert request.mp3_bitrate == 192
+        assert request.response_format == "wav"
