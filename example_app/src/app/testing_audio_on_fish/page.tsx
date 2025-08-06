@@ -27,9 +27,10 @@ export default function TestingAudioOnFish() {
     temperature: 0.0,
     top_p: 0.9,
     reference_id: '',
-    prosody: ''
+    prosody: '',
+    speed: 1.0,
+    volume: 0
   });
-  const [speed, setSpeed] = useState(1.0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,27 +122,26 @@ export default function TestingAudioOnFish() {
     }
 
     try {
-      // const requestBody = {
-      //   text: formData.text,
-      //   model: formData.model,
-      //   temperature: formData.temperature,
-      //   top_p: formData.top_p,
-      //   references: [
-      //     {
-      //       reference_id: formData.reference_id
-      //     }
-      //   ]
-      // };
       const requestBody = {
         input: formData.text,
         model: formData.reference_id,
-        response_format: 'mp3',
+        base_model: formData.model,
+        temperature: formData.temperature,
+        top_p: formData.top_p,
+        speed: formData.speed,
+        volume: formData.volume,
+        references: [
+          {
+            reference_id: formData.reference_id
+          }
+        ]
       };
+
       if (formData.prosody) {
         (requestBody as any).prosody = formData.prosody;
       }
 
-      const response = await fetch('https://voiss-models.zeabur.app/tts/fish/audio/v1/', {
+      const response = await fetch('https://voiss-models.zeabur.app/tts/fishaudio/v2/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -237,7 +237,7 @@ export default function TestingAudioOnFish() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">音調 ({formData.temperature})</label>
+                  <label className="block text-sm font-medium mb-2">變化度 ({formData.temperature})</label>
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-gray-400">0</span>
                     <input
@@ -255,7 +255,7 @@ export default function TestingAudioOnFish() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">速度 ({speed}x)</label>
+                  <label className="block text-sm font-medium mb-2">速度 ({formData.speed}x)</label>
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-gray-400">0.5x</span>
                     <input
@@ -263,12 +263,30 @@ export default function TestingAudioOnFish() {
                       min="0.5"
                       max="2"
                       step="0.1"
-                      value={speed}
-                      onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                      value={formData.speed}
+                      onChange={(e) => setFormData(prev => ({ ...prev, speed: parseFloat(e.target.value) }))}
                       className="flex-1"
                     />
                     <span className="text-sm text-gray-400">2x</span>
-                    <span className="text-sm text-white w-12">{speed}x</span>
+                    <span className="text-sm text-white w-12">{formData.speed}x</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">音量 ({formData.volume})</label>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-400">-10</span>
+                    <input
+                      type="range"
+                      min="-10"
+                      max="10"
+                      step="1"
+                      value={formData.volume}
+                      onChange={(e) => setFormData(prev => ({ ...prev, volume: parseInt(e.target.value) }))}
+                      className="flex-1"
+                    />
+                    <span className="text-sm text-gray-400">10</span>
+                    <span className="text-sm text-white w-12">{formData.volume}</span>
                   </div>
                 </div>
 
