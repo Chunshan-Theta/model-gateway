@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from tts.fishaudio.v1.endpoint import router as tts_router
+from tts.fishaudio.v1.endpoint import router as tts_router_v1
+from tts.fishaudio.v2.endpoint import router as tts_router_v2
 
 app = FastAPI()
 
@@ -13,4 +14,6 @@ app.add_middleware(
     allow_headers=["*"],  # 允許所有標頭
 )
 
-app.include_router(tts_router)
+app.include_router(tts_router_v1)
+app.include_router(tts_router_v2)
+
